@@ -50,10 +50,10 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header" style={{ minHeight: 'auto', padding: '20px' }}>
-        <h1>Campus Marketplace</h1>
+      <header className="App-header">
+        <h1>🎓 Campus Marketplace</h1>
         {user && (
-          <div>
+          <div style={{ textAlign: 'right' }}>
             <p>Logged in as {user.name || user.email} ({user.role})</p>
             <button onClick={handleLogout}>Log Out</button>
           </div>
@@ -66,29 +66,29 @@ function App() {
         <NewListing token={token} onListingCreated={handleListingCreated} />
       )}
 
-      <main style={{ padding: '20px' }}>
-        {loading && <p>Loading listings...</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+      <main>
+        {loading && <p className="empty-state">Loading listings...</p>}
+        {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
         {!loading && !error && listings.length === 0 && (
-          <p>No listings yet. Be the first to post one!</p>
+          <p className="empty-state">No listings yet. Be the first to post one!</p>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
+        <div className="listings-grid">
           {listings.map((listing) => (
-            <div
-              key={listing.id}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                padding: '16px',
-                textAlign: 'left',
-              }}
-            >
-              <h3>{listing.title}</h3>
-              <p>{listing.description}</p>
-              <p><strong>UGX {Number(listing.price).toLocaleString()}</strong></p>
-              <p style={{ fontSize: '14px', color: '#666' }}>{listing.address}</p>
+            <div key={listing.id} className="listing-card">
+              <div className="listing-image">
+                {listing.image_url ? (
+                  <img src={listing.image_url} alt={listing.title} />
+                ) : (
+                  <span>No Photo</span>
+                )}
+              </div>
+              <div className="listing-card-body">
+                <h3>{listing.title}</h3>
+                <p className="listing-price">UGX {Number(listing.price).toLocaleString()}</p>
+                <p className="listing-address">📍 {listing.address}</p>
+              </div>
             </div>
           ))}
         </div>
