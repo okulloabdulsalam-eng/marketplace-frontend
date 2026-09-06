@@ -42,10 +42,10 @@ function Auth({ onLogin }) {
   };
 
   return (
-    <div style={{ maxWidth: '350px', margin: '20px auto', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+    <div className="card-panel">
       <h2>{isLogin ? 'Log In' : 'Sign Up'}</h2>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {!isLogin && (
           <input
             type="text"
@@ -79,16 +79,18 @@ function Auth({ onLogin }) {
           </select>
         )}
 
-        <button type="submit">{isLogin ? 'Log In' : 'Sign Up'}</button>
+        <button type="submit" className="btn-primary">
+          {isLogin ? 'Log In' : 'Sign Up'}
+        </button>
       </form>
 
       {message && <p style={{ marginTop: '10px' }}>{message}</p>}
 
-      <p style={{ marginTop: '10px', fontSize: '14px' }}>
+      <p style={{ marginTop: '14px', fontSize: '14px' }}>
         {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
         <button
           onClick={() => { setIsLogin(!isLogin); setMessage(''); }}
-          style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+          className="link-btn"
         >
           {isLogin ? 'Sign up' : 'Log in'}
         </button>

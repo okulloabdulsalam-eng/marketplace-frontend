@@ -78,9 +78,9 @@ function NewListing({ token, onListingCreated }) {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '20px auto', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
+    <div className="card-panel">
       <h2>Post a New Listing</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <input
           type="text"
           placeholder="Title (e.g. Single Room Near Campus)"
@@ -108,7 +108,7 @@ function NewListing({ token, onListingCreated }) {
           onChange={(e) => setAddress(e.target.value)}
         />
 
-        <button type="button" onClick={useMyLocation}>
+        <button type="button" onClick={useMyLocation} className="btn-secondary">
           📍 Use My Current Location
         </button>
 
@@ -131,7 +131,7 @@ function NewListing({ token, onListingCreated }) {
           />
         </div>
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} className="btn-primary">
           {loading ? 'Posting...' : 'Post Listing'}
         </button>
       </form>

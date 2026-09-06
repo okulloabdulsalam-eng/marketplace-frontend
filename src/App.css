@@ -1,38 +1,214 @@
+:root {
+  --primary: #0d6e6e;
+  --primary-dark: #094f4f;
+  --accent: #ff8a3d;
+  --accent-dark: #e6702a;
+  --bg: #f7f9f9;
+  --card-bg: #ffffff;
+  --text-dark: #1e2a2a;
+  --text-muted: #6b7a7a;
+  --border: #e2e8e8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-dark);
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+  max-width: 480px;
+  margin: 0 auto;
   min-height: 100vh;
+  background: var(--bg);
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+/* Sticky header, mobile app feel */
+.App-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--primary);
+  color: white;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.App-header p {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.App-header button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  min-height: 40px;
+}
+
+.App-header button:active {
+  background: var(--accent-dark);
+}
+
+/* Forms - full width on mobile, generous touch targets */
+.card-panel {
+  margin: 16px;
+  padding: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.card-panel h2 {
+  margin-top: 0;
+  font-size: 19px;
+  color: var(--primary-dark);
+}
+
+.card-panel input,
+.card-panel textarea,
+.card-panel select {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
+  width: 100%;
+}
+
+.card-panel input:focus,
+.card-panel textarea:focus,
+.card-panel select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  min-height: 48px; /* comfortable tap target */
+}
+
+.btn-primary:active {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  min-height: 46px;
+}
+
+.btn-secondary:active {
+  background: var(--accent-dark);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px;
+}
+
+main {
+  padding: 16px;
+}
+
+/* Single column on mobile - this is the key mobile-first change */
+.listings-grid {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 14px;
 }
 
-.App-link {
-  color: #61dafb;
+.listing-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  padding: 16px;
+  text-align: left;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+.listing-card:active {
+  background: #fafcfc;
+}
+
+.listing-card h3 {
+  margin: 0 0 6px 0;
+  color: var(--text-dark);
+  font-size: 17px;
+}
+
+.listing-card p {
+  margin: 4px 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.listing-price {
+  color: var(--primary-dark) !important;
+  font-weight: 700;
+  font-size: 17px !important;
+}
+
+.listing-address {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 16px;
+  font-size: 15px;
+}
+
+/* Slightly wider layout on tablets/desktop, but still mobile-optimized styling */
+@media (min-width: 600px) {
+  .App {
+    max-width: 480px;
   }
 }
