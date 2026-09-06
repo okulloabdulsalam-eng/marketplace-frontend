@@ -30,6 +30,8 @@ html, body {
   min-height: 100vh;
   background: var(--bg);
   box-shadow: 0 0 20px rgba(0,0,0,0.05);
+  position: relative;
+  padding-bottom: 76px; /* space for bottom nav */
 }
 
 .App-header {
@@ -39,43 +41,80 @@ html, body {
   background: var(--primary);
   color: white;
   padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  text-align: center;
 }
 
 .App-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
 }
 
-.App-header p {
-  margin: 0;
-  font-size: 13px;
-  opacity: 0.9;
+.app-main {
+  padding: 16px;
 }
 
-.App-header button {
-  background: var(--accent);
-  color: white;
+/* Search bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.search-bar input {
   border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
+  outline: none;
+  font-size: 15px;
+  width: 100%;
+  background: transparent;
+}
+
+/* Category chips */
+.category-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.category-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-dark);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
-  font-size: 14px;
-  min-height: 40px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.App-header button:active {
-  background: var(--accent-dark);
+.chip-active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
+/* Forms */
 .card-panel {
-  margin: 16px;
+  margin: 0;
   padding: 20px;
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -116,6 +155,10 @@ html, body {
   font-size: 16px;
   cursor: pointer;
   min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-primary:active {
@@ -149,10 +192,7 @@ html, body {
   padding: 4px;
 }
 
-main {
-  padding: 16px;
-}
-
+/* Listings grid */
 .listings-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -167,10 +207,6 @@ main {
   padding: 0;
   text-align: left;
   overflow: hidden;
-}
-
-.listing-card:active {
-  background: #fafcfc;
 }
 
 .listing-image {
@@ -201,22 +237,17 @@ main {
   color: var(--text-dark);
 }
 
-.listing-card p {
-  margin: 4px 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
 .listing-price {
   color: var(--primary-dark) !important;
   font-weight: 700;
   font-size: 15px !important;
+  margin: 4px 0 !important;
 }
 
 .listing-address {
   font-size: 12px !important;
   color: var(--text-muted) !important;
+  margin: 0 !important;
 }
 
 .empty-state {
@@ -226,8 +257,121 @@ main {
   font-size: 15px;
 }
 
-@media (min-width: 600px) {
-  .App {
-    max-width: 480px;
-  }
+/* Account page */
+.account-page {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.account-avatar {
+  width: 72px;
+  height: 72px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 auto 12px;
+}
+
+.account-page h2 {
+  margin: 0 0 6px 0;
+}
+
+.account-role-badge {
+  display: inline-block;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.account-info-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.account-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.logout-btn {
+  background: #d64545;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.logout-btn:active {
+  background: #b93636;
+}
+
+/* Bottom navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: white;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 12px;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item-post {
+  color: white;
+  background: var(--accent);
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  justify-content: center;
+  margin-top: -20px;
+  box-shadow: 0 4px 10px rgba(255,138,61,0.4);
+}
+
+.nav-item-post span {
+  display: none;
+}
+
+.nav-item-post.active,
+.nav-item-post:active {
+  background: var(--accent-dark);
+  color: white;
 }

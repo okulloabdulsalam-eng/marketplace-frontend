@@ -1,41 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Auth from './Auth';
 import NewListing from './NewListing';
+import Home from './pages/Home';
+import Account from './pages/Account';
+import BottomNav from './components/BottomNav';
 import './App.css';
-import { API_URL } from './config';
 
 function App() {
-  const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   });
   const [token, setToken] = useState(() => localStorage.getItem('token'));
-
-  const loadListings = () => {
-    setLoading(true);
-    fetch(`${API_URL}/api/v1/listings`)
-      .then((res) => res.json())
-      .then((data) => {
-        setListings(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Could not load listings. Is the backend running?');
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    loadListings();
-  }, []);
+  const [activeTab, setActiveTab] = useState('home');
 
   const handleLogin = (userData, userToken) => {
     setUser(userData);
     setToken(userToken);
+    setActiveTab('home');
   };
 
   const handleLogout = () => {
@@ -46,54 +28,32 @@ function App() {
   };
 
   const handleListingCreated = () => {
-    loadListings();
+    setActiveTab('home');
   };
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>🎓 Campus Marketplace</h1>
-        {user && (
-          <div style={{ textAlign: 'right' }}>
-            <p>Logged in as {user.name || user.email} ({user.role})</p>
-            <button onClick={handleLogout}>Log Out</button>
-          </div>
-        )}
       </header>
 
-      {!user && <Auth onLogin={handleLogin} />}
+      <main className="app-main">
+        {!user && <Auth onLogin={handleLogin} />}
 
-      {user && user.role === 'seller' && (
-        <NewListing token={token} onListingCreated={handleListingCreated} />
-      )}
+        {user && activeTab === 'home' && <Home />}
 
-      <main>
-        {loading && <p className="empty-state">Loading listings...</p>}
-        {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-
-        {!loading && !error && listings.length === 0 && (
-          <p className="empty-state">No listings yet. Be the first to post one!</p>
+        {user && activeTab === 'post' && user.role === 'seller' && (
+          <NewListing token={token} onListingCreated={handleListingCreated} />
         )}
 
-        <div className="listings-grid">
-          {listings.map((listing) => (
-            <div key={listing.id} className="listing-card">
-              <div className="listing-image">
-                {listing.image_url ? (
-                  <img src={listing.image_url} alt={listing.title} />
-                ) : (
-                  <span>No Photo</span>
-                )}
-              </div>
-              <div className="listing-card-body">
-                <h3>{listing.title}</h3>
-                <p className="listing-price">UGX {Number(listing.price).toLocaleString()}</p>
-                <p className="listing-address">📍 {listing.address}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        {user && activeTab === 'account' && (
+          <Account user={user} onLogout={handleLogout} />
+        )}
       </main>
+
+      {user && (
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} canPost={user.role === 'seller'} />
+      )}
     </div>
   );
 }
