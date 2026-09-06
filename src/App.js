@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Auth from './Auth';
 import NewListing from './NewListing';
 import './App.css';
+import { API_URL } from './config';
 
 function App() {
   const [listings, setListings] = useState([]);
@@ -15,7 +16,7 @@ function App() {
 
   const loadListings = () => {
     setLoading(true);
-    fetch('http://localhost:5000/api/v1/listings')
+    fetch(`${API_URL}/api/v1/listings`)
       .then((res) => res.json())
       .then((data) => {
         setListings(data);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from './config';
 
 function NewListing({ token, onListingCreated }) {
   const [title, setTitle] = useState('');
@@ -36,7 +37,7 @@ function NewListing({ token, onListingCreated }) {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/listings', {
+      const res = await fetch(`${API_URL}/api/v1/listings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

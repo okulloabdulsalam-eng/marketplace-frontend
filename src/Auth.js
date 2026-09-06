@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from './config';
 
 function Auth({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,7 +19,7 @@ function Auth({ onLogin }) {
       : { name, email, password, role };
 
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/auth/${endpoint}`, {
+      const res = await fetch(`${API_URL}/api/v1/auth/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
