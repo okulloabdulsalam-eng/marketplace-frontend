@@ -5,12 +5,20 @@ const CATEGORY_FIELDS = {
   'Phones & Tablets': ['brand', 'storage', 'ram'],
   'Smartphones': ['brand', 'storage', 'ram'],
   'Tablets': ['brand', 'storage', 'ram'],
+  'Phone Accessories': ['brand'],
   'Vehicles': ['make', 'model', 'year', 'mileage'],
   'Cars': ['make', 'model', 'year', 'mileage'],
   'Motorcycles': ['make', 'model', 'year', 'mileage'],
+  'Bicycles': ['brand'],
   'Property': ['bedrooms', 'bathrooms', 'furnished'],
   'Rooms for Rent': ['bedrooms', 'bathrooms', 'furnished'],
   'Apartments': ['bedrooms', 'bathrooms', 'furnished'],
+  'Hostels': ['bedrooms', 'furnished'],
+  'Land': ['size_acres'],
+  'Electronics': ['brand'],
+  'Laptops & Computers': ['brand', 'storage', 'ram'],
+  'TVs': ['brand', 'screen_size'],
+  'Audio & Speakers': ['brand'],
 };
 
 const FIELD_LABELS = {
@@ -24,6 +32,8 @@ const FIELD_LABELS = {
   bedrooms: 'Bedrooms',
   bathrooms: 'Bathrooms',
   furnished: 'Furnished? (Yes/No)',
+  size_acres: 'Land size (acres)',
+  screen_size: 'Screen size (inches)',
 };
 
 function NewListing({ token, onListingCreated }) {
@@ -34,8 +44,9 @@ function NewListing({ token, onListingCreated }) {
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [condition, setCondition] = useState('');
-  const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState([]);
+  const [mainCategoryId, setMainCategoryId] = useState('');
+  const [subCategoryId, setSubCategoryId] = useState('');
   const [extraFields, setExtraFields] = useState({});
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,17 +62,21 @@ function NewListing({ token, onListingCreated }) {
       .catch(() => {});
   }, []);
 
-  const flatCategories = categories.flatMap((main) => [
-    { id: main.id, name: main.name, isMain: true },
-    ...(main.subcategories || []).map((sub) => ({ id: sub.id, name: `— ${sub.name}`, isMain: false })),
-  ]);
+  const selectedMainCategory = categories.find((c) => c.id === Number(mainCategoryId));
+  const subcategories = selectedMainCategory?.subcategories || [];
 
-  const selectedCategoryName = (() => {
-    const found = flatCategories.find((c) => c.id === Number(categoryId));
-    return found ? found.name.replace('— ', '') : null;
-  })();
+  const effectiveCategoryName = subCategoryId
+    ? subcategories.find((s) => s.id === Number(subCategoryId))?.name
+    : selectedMainCategory?.name;
 
-  const dynamicFields = CATEGORY_FIELDS[selectedCategoryName] || [];
+  const dynamicFields = CATEGORY_FIELDS[effectiveCategoryName] || [];
+  const finalCategoryId = subCategoryId || mainCategoryId || null;
+
+  const handleMainCategoryChange = (value) => {
+    setMainCategoryId(value);
+    setSubCategoryId('');
+    setExtraFields({});
+  };
 
   const useMyLocation = () => {
     if (!navigator.geolocation) {
@@ -113,6 +128,11 @@ function NewListing({ token, onListingCreated }) {
       return;
     }
 
+    if (!mainCategoryId) {
+      setMessage('Please select a category');
+      return;
+    }
+
     setLoading(true);
 
     let uploadedImageUrl = null;
@@ -141,7 +161,7 @@ function NewListing({ token, onListingCreated }) {
           address,
           latitude: Number(latitude),
           longitude: Number(longitude),
-          category_id: categoryId || null,
+          category_id: finalCategoryId,
           condition: condition || null,
           attributes: extraFields,
           image_url: uploadedImageUrl,
@@ -164,7 +184,8 @@ function NewListing({ token, onListingCreated }) {
       setLatitude('');
       setLongitude('');
       setCondition('');
-      setCategoryId('');
+      setMainCategoryId('');
+      setSubCategoryId('');
       setExtraFields({});
       setImageFile(null);
       setImagePreview(null);
@@ -182,12 +203,22 @@ function NewListing({ token, onListingCreated }) {
     <div className="card-panel">
       <h2>Post a New Listing</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-          <option value="">Select a category</option>
-          {flatCategories.map((cat) => (
+
+        <select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)} required>
+          <option value="">1. Select a category</option>
+          {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
+
+        {subcategories.length > 0 && (
+          <select value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)}>
+            <option value="">2. Choose a subcategory (optional)</option>
+            {subcategories.map((sub) => (
+              <option key={sub.id} value={sub.id}>{sub.name}</option>
+            ))}
+          </select>
+        )}
 
         <div>
           <label style={{ fontSize: '14px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
