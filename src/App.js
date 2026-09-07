@@ -3,6 +3,8 @@ import Auth from './Auth';
 import NewListing from './NewListing';
 import Home from './pages/Home';
 import Account from './pages/Account';
+import ListingDetail from './pages/ListingDetail';
+import CategoryPage from './pages/CategoryPage';
 import BottomNav from './components/BottomNav';
 import './App.css';
 
@@ -13,6 +15,8 @@ function App() {
   });
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedListingId, setSelectedListingId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(undefined); // undefined = not browsing a category
 
   const handleLogin = (userData, userToken) => {
     setUser(userData);
@@ -29,7 +33,18 @@ function App() {
 
   const handleListingCreated = () => {
     setActiveTab('home');
+    setSelectedCategory(undefined);
   };
+
+  const goToTab = (tab) => {
+    setSelectedListingId(null);
+    setSelectedCategory(undefined);
+    setActiveTab(tab);
+  };
+
+  const showHome = activeTab === 'home' && selectedCategory === undefined && !selectedListingId;
+  const showCategory = activeTab === 'home' && selectedCategory !== undefined && !selectedListingId;
+  const showDetail = activeTab === 'home' && !!selectedListingId;
 
   return (
     <div className="App">
@@ -40,7 +55,26 @@ function App() {
       <main className="app-main">
         {!user && <Auth onLogin={handleLogin} />}
 
-        {user && activeTab === 'home' && <Home />}
+        {user && showHome && (
+          <Home
+            onSelectListing={setSelectedListingId}
+            onSelectCategory={setSelectedCategory}
+            onPostAd={() => setActiveTab('post')}
+            canPost={user.role === 'seller'}
+          />
+        )}
+
+        {user && showCategory && (
+          <CategoryPage
+            category={selectedCategory}
+            onBack={() => setSelectedCategory(undefined)}
+            onSelectListing={setSelectedListingId}
+          />
+        )}
+
+        {user && showDetail && (
+          <ListingDetail listingId={selectedListingId} onBack={() => setSelectedListingId(null)} />
+        )}
 
         {user && activeTab === 'post' && user.role === 'seller' && (
           <NewListing token={token} onListingCreated={handleListingCreated} />
@@ -52,7 +86,7 @@ function App() {
       </main>
 
       {user && (
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} canPost={user.role === 'seller'} />
+        <BottomNav activeTab={activeTab} setActiveTab={goToTab} canPost={user.role === 'seller'} />
       )}
     </div>
   );

@@ -1,11 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import {
+  Search, MapPin, PlusCircle, Flame, Car, Building2, Smartphone,
+  Tv, Sofa, Shirt, Wrench, UtensilsCrossed, Briefcase, Sparkles, Grid3x3
+} from 'lucide-react';
 import { API_URL } from '../config';
 
-function Home() {
+const ICONS = {
+  'Vehicles': Car,
+  'Property': Building2,
+  'Phones & Tablets': Smartphone,
+  'Electronics': Tv,
+  'Home, Furniture & Appliances': Sofa,
+  'Fashion': Shirt,
+  'Services': Wrench,
+  'Food & Restaurants': UtensilsCrossed,
+  'Jobs': Briefcase,
+  'Beauty & Personal Care': Sparkles,
+};
+
+function Home({ onSelectListing, onSelectCategory, onPostAd, canPost }) {
   const [listings, setListings] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,14 +44,17 @@ function Home() {
       });
   }, []);
 
-  const filtered = listings.filter((l) => {
-    const matchesCategory = activeCategory ? l.category_id === activeCategory : true;
-    const matchesQuery = query ? l.title.toLowerCase().includes(query.toLowerCase()) : true;
-    return matchesCategory && matchesQuery;
-  });
+  const filtered = query
+    ? listings.filter((l) => l.title.toLowerCase().includes(query.toLowerCase()))
+    : listings;
 
   return (
     <div>
+      <div className="location-bar">
+        <MapPin size={15} />
+        <span>Kampala, Uganda</span>
+      </div>
+
       <div className="search-bar">
         <Search size={18} className="search-icon" />
         <input
@@ -47,33 +65,44 @@ function Home() {
         />
       </div>
 
-      <div className="category-chips">
-        <button
-          className={`chip ${activeCategory === null ? 'chip-active' : ''}`}
-          onClick={() => setActiveCategory(null)}
-        >
-          All
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            className={`chip ${activeCategory === cat.id ? 'chip-active' : ''}`}
-            onClick={() => setActiveCategory(cat.id)}
-          >
-            {cat.name}
+      {/* Jiji-style category grid */}
+      <div className="jiji-grid">
+        {canPost && (
+          <button className="jiji-tile jiji-tile-post" onClick={onPostAd}>
+            <div className="jiji-tile-icon jiji-tile-icon-post"><PlusCircle size={24} /></div>
+            <span>Post Ad</span>
           </button>
-        ))}
+        )}
+
+        <button className="jiji-tile" onClick={() => onSelectCategory(null)}>
+          <div className="jiji-tile-icon jiji-tile-icon-trending"><Flame size={22} /></div>
+          <span>Trending</span>
+        </button>
+
+        {categories.map((cat) => {
+          const Icon = ICONS[cat.name] || Grid3x3;
+          return (
+            <button key={cat.id} className="jiji-tile" onClick={() => onSelectCategory(cat)}>
+              <div className="jiji-tile-icon"><Icon size={22} /></div>
+              <span>{cat.name}</span>
+            </button>
+          );
+        })}
       </div>
+
+      <h3 className="section-title">
+        {query ? `Results for "${query}"` : 'Trending ads'}
+      </h3>
 
       {loading && <p className="empty-state">Loading listings...</p>}
       {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
       {!loading && !error && filtered.length === 0 && (
-        <p className="empty-state">No listings found. Try a different search.</p>
+        <p className="empty-state">No listings found.</p>
       )}
 
       <div className="listings-grid">
         {filtered.map((listing) => (
-          <div key={listing.id} className="listing-card">
+          <div key={listing.id} className="listing-card" onClick={() => onSelectListing(listing.id)}>
             <div className="listing-image">
               {listing.image_url ? (
                 <img src={listing.image_url} alt={listing.title} />
