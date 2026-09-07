@@ -40,6 +40,10 @@ function NewListing({ token, onListingCreated }) {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   useEffect(() => {
     fetch(`${API_URL}/api/v1/categories`)
       .then((r) => r.json())
@@ -78,6 +82,28 @@ function NewListing({ token, onListingCreated }) {
     setExtraFields((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const uploadImageToCloudinary = async () => {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+    formData.append('upload_preset', 'marketplace_unsigned');
+
+    const res = await fetch('https://api.cloudinary.com/v1_1/hp4lwn53/image/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    return data.secure_url;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -88,6 +114,19 @@ function NewListing({ token, onListingCreated }) {
     }
 
     setLoading(true);
+
+    let uploadedImageUrl = null;
+    if (imageFile) {
+      setUploadingImage(true);
+      try {
+        uploadedImageUrl = await uploadImageToCloudinary();
+      } catch (err) {
+        console.error(err);
+        setMessage('Image upload failed, posting without photo');
+      }
+      setUploadingImage(false);
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/v1/listings`, {
         method: 'POST',
@@ -105,6 +144,7 @@ function NewListing({ token, onListingCreated }) {
           category_id: categoryId || null,
           condition: condition || null,
           attributes: extraFields,
+          image_url: uploadedImageUrl,
         }),
       });
 
@@ -126,6 +166,8 @@ function NewListing({ token, onListingCreated }) {
       setCondition('');
       setCategoryId('');
       setExtraFields({});
+      setImageFile(null);
+      setImagePreview(null);
       setLoading(false);
 
       if (onListingCreated) onListingCreated(data);
@@ -147,6 +189,20 @@ function NewListing({ token, onListingCreated }) {
           ))}
         </select>
 
+        <div>
+          <label style={{ fontSize: '14px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+            Photo
+          </label>
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="preview"
+              style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '10px', marginBottom: '8px' }}
+            />
+          )}
+          <input type="file" accept="image/*" onChange={handleImageChange} />
+        </div>
+
         <input
           type="text"
           placeholder="Title (e.g. Single Room Near Campus)"
@@ -155,7 +211,6 @@ function NewListing({ token, onListingCreated }) {
           required
         />
 
-        {/* Category-specific fields appear here automatically */}
         {dynamicFields.map((field) => (
           <input
             key={field}
@@ -219,7 +274,7 @@ function NewListing({ token, onListingCreated }) {
         </div>
 
         <button type="submit" disabled={loading} className="btn-primary">
-          {loading ? 'Posting...' : 'Post Listing'}
+          {uploadingImage ? 'Uploading photo...' : loading ? 'Posting...' : 'Post Listing'}
         </button>
       </form>
 
