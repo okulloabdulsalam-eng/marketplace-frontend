@@ -1,5 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { API_URL } from './config';
+
+const CATEGORY_FIELDS = {
+  'Phones & Tablets': ['brand', 'storage', 'ram'],
+  'Smartphones': ['brand', 'storage', 'ram'],
+  'Tablets': ['brand', 'storage', 'ram'],
+  'Vehicles': ['make', 'model', 'year', 'mileage'],
+  'Cars': ['make', 'model', 'year', 'mileage'],
+  'Motorcycles': ['make', 'model', 'year', 'mileage'],
+  'Property': ['bedrooms', 'bathrooms', 'furnished'],
+  'Rooms for Rent': ['bedrooms', 'bathrooms', 'furnished'],
+  'Apartments': ['bedrooms', 'bathrooms', 'furnished'],
+};
+
+const FIELD_LABELS = {
+  brand: 'Brand (e.g. Samsung, Apple)',
+  storage: 'Storage (e.g. 128GB)',
+  ram: 'RAM (e.g. 8GB)',
+  make: 'Make (e.g. Toyota)',
+  model: 'Model (e.g. Corolla)',
+  year: 'Year',
+  mileage: 'Mileage (km)',
+  bedrooms: 'Bedrooms',
+  bathrooms: 'Bathrooms',
+  furnished: 'Furnished? (Yes/No)',
+};
 
 function NewListing({ token, onListingCreated }) {
   const [title, setTitle] = useState('');
@@ -8,8 +33,31 @@ function NewListing({ token, onListingCreated }) {
   const [address, setAddress] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [condition, setCondition] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [extraFields, setExtraFields] = useState({});
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/v1/categories`)
+      .then((r) => r.json())
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
+
+  const flatCategories = categories.flatMap((main) => [
+    { id: main.id, name: main.name, isMain: true },
+    ...(main.subcategories || []).map((sub) => ({ id: sub.id, name: `— ${sub.name}`, isMain: false })),
+  ]);
+
+  const selectedCategoryName = (() => {
+    const found = flatCategories.find((c) => c.id === Number(categoryId));
+    return found ? found.name.replace('— ', '') : null;
+  })();
+
+  const dynamicFields = CATEGORY_FIELDS[selectedCategoryName] || [];
 
   const useMyLocation = () => {
     if (!navigator.geolocation) {
@@ -24,6 +72,10 @@ function NewListing({ token, onListingCreated }) {
       },
       () => setMessage('Could not get your location — enter it manually')
     );
+  };
+
+  const handleFieldChange = (key, value) => {
+    setExtraFields((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -50,6 +102,9 @@ function NewListing({ token, onListingCreated }) {
           address,
           latitude: Number(latitude),
           longitude: Number(longitude),
+          category_id: categoryId || null,
+          condition: condition || null,
+          attributes: extraFields,
         }),
       });
 
@@ -68,6 +123,9 @@ function NewListing({ token, onListingCreated }) {
       setAddress('');
       setLatitude('');
       setLongitude('');
+      setCondition('');
+      setCategoryId('');
+      setExtraFields({});
       setLoading(false);
 
       if (onListingCreated) onListingCreated(data);
@@ -82,6 +140,13 @@ function NewListing({ token, onListingCreated }) {
     <div className="card-panel">
       <h2>Post a New Listing</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+          <option value="">Select a category</option>
+          {flatCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
+
         <input
           type="text"
           placeholder="Title (e.g. Single Room Near Campus)"
@@ -89,6 +154,27 @@ function NewListing({ token, onListingCreated }) {
           onChange={(e) => setTitle(e.target.value)}
           required
         />
+
+        {/* Category-specific fields appear here automatically */}
+        {dynamicFields.map((field) => (
+          <input
+            key={field}
+            type="text"
+            placeholder={FIELD_LABELS[field] || field}
+            value={extraFields[field] || ''}
+            onChange={(e) => handleFieldChange(field, e.target.value)}
+          />
+        ))}
+
+        {dynamicFields.length > 0 && (
+          <select value={condition} onChange={(e) => setCondition(e.target.value)}>
+            <option value="">Condition</option>
+            <option value="new">New</option>
+            <option value="used">Used</option>
+            <option value="refurbished">Refurbished</option>
+          </select>
+        )}
+
         <textarea
           placeholder="Description"
           value={description}
