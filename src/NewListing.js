@@ -1,40 +1,8 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from './config';
+import DynamicField from './components/DynamicField';
 
-const CATEGORY_FIELDS = {
-  'Phones & Tablets': ['brand', 'storage', 'ram'],
-  'Smartphones': ['brand', 'storage', 'ram'],
-  'Tablets': ['brand', 'storage', 'ram'],
-  'Phone Accessories': ['brand'],
-  'Vehicles': ['make', 'model', 'year', 'mileage'],
-  'Cars': ['make', 'model', 'year', 'mileage'],
-  'Motorcycles': ['make', 'model', 'year', 'mileage'],
-  'Bicycles': ['brand'],
-  'Property': ['bedrooms', 'bathrooms', 'furnished'],
-  'Rooms for Rent': ['bedrooms', 'bathrooms', 'furnished'],
-  'Apartments': ['bedrooms', 'bathrooms', 'furnished'],
-  'Hostels': ['bedrooms', 'furnished'],
-  'Land': ['size_acres'],
-  'Electronics': ['brand'],
-  'Laptops & Computers': ['brand', 'storage', 'ram'],
-  'TVs': ['brand', 'screen_size'],
-  'Audio & Speakers': ['brand'],
-};
-
-const FIELD_LABELS = {
-  brand: 'Brand (e.g. Samsung, Apple)',
-  storage: 'Storage (e.g. 128GB)',
-  ram: 'RAM (e.g. 8GB)',
-  make: 'Make (e.g. Toyota)',
-  model: 'Model (e.g. Corolla)',
-  year: 'Year',
-  mileage: 'Mileage (km)',
-  bedrooms: 'Bedrooms',
-  bathrooms: 'Bathrooms',
-  furnished: 'Furnished? (Yes/No)',
-  size_acres: 'Land size (acres)',
-  screen_size: 'Screen size (inches)',
-};
+const CONDITIONS = ['Brand New', 'Like New', 'Excellent', 'Good', 'Fair', 'Used', 'Refurbished', 'For Parts'];
 
 function NewListing({ token, onListingCreated }) {
   const [title, setTitle] = useState('');
@@ -45,8 +13,7 @@ function NewListing({ token, onListingCreated }) {
   const [longitude, setLongitude] = useState('');
   const [condition, setCondition] = useState('');
   const [categories, setCategories] = useState([]);
-  const [mainCategoryId, setMainCategoryId] = useState('');
-  const [subCategoryId, setSubCategoryId] = useState('');
+  const [path, setPath] = useState([]); // array of chosen category objects, root to leaf
   const [extraFields, setExtraFields] = useState({});
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,21 +29,30 @@ function NewListing({ token, onListingCreated }) {
       .catch(() => {});
   }, []);
 
-  const selectedMainCategory = categories.find((c) => c.id === Number(mainCategoryId));
-  const subcategories = selectedMainCategory?.subcategories || [];
+  // At each level, the options are: root categories, or the subcategories of the last chosen item
+  const levelOptions = (levelIndex) => {
+    if (levelIndex === 0) return categories;
+    const parent = path[levelIndex - 1];
+    return parent?.subcategories || [];
+  };
 
-  const effectiveCategoryName = subCategoryId
-    ? subcategories.find((s) => s.id === Number(subCategoryId))?.name
-    : selectedMainCategory?.name;
-
-  const dynamicFields = CATEGORY_FIELDS[effectiveCategoryName] || [];
-  const finalCategoryId = subCategoryId || mainCategoryId || null;
-
-  const handleMainCategoryChange = (value) => {
-    setMainCategoryId(value);
-    setSubCategoryId('');
+  const handleSelectAtLevel = (levelIndex, categoryId) => {
+    const options = levelOptions(levelIndex);
+    const chosen = options.find((c) => c.id === Number(categoryId));
+    const newPath = path.slice(0, levelIndex);
+    if (chosen) newPath.push(chosen);
+    setPath(newPath);
     setExtraFields({});
   };
+
+  // The deepest chosen category determines which schema to show
+  const currentCategory = path[path.length - 1];
+  const attributeSchema = currentCategory?.attribute_schema || [];
+  const finalCategoryId = currentCategory?.id || null;
+
+  // How many dropdown levels to render: one for root, plus one per level that has subcategories
+  const numLevels = path.length + (currentCategory?.subcategories?.length > 0 || path.length === 0 ? 1 : 0);
+
 
   const useMyLocation = () => {
     if (!navigator.geolocation) {
@@ -118,7 +94,6 @@ function NewListing({ token, onListingCreated }) {
     const data = await res.json();
     return data.secure_url;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -128,7 +103,7 @@ function NewListing({ token, onListingCreated }) {
       return;
     }
 
-    if (!mainCategoryId) {
+    if (path.length === 0) {
       setMessage('Please select a category');
       return;
     }
@@ -146,7 +121,6 @@ function NewListing({ token, onListingCreated }) {
       }
       setUploadingImage(false);
     }
-
     try {
       const res = await fetch(`${API_URL}/api/v1/listings`, {
         method: 'POST',
@@ -184,8 +158,7 @@ function NewListing({ token, onListingCreated }) {
       setLatitude('');
       setLongitude('');
       setCondition('');
-      setMainCategoryId('');
-      setSubCategoryId('');
+      setPath([]);
       setExtraFields({});
       setImageFile(null);
       setImagePreview(null);
@@ -198,27 +171,31 @@ function NewListing({ token, onListingCreated }) {
       setLoading(false);
     }
   };
-
   return (
     <div className="card-panel">
       <h2>Post a New Listing</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-        <select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)} required>
-          <option value="">1. Select a category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
-
-        {subcategories.length > 0 && (
-          <select value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)}>
-            <option value="">2. Choose a subcategory (optional)</option>
-            {subcategories.map((sub) => (
-              <option key={sub.id} value={sub.id}>{sub.name}</option>
-            ))}
-          </select>
-        )}
+        {Array.from({ length: numLevels }).map((_, levelIndex) => {
+          const options = levelOptions(levelIndex);
+          if (!options || options.length === 0) return null;
+          const currentValue = path[levelIndex]?.id || '';
+          return (
+            <select
+              key={levelIndex}
+              value={currentValue}
+              onChange={(e) => handleSelectAtLevel(levelIndex, e.target.value)}
+              required={levelIndex === 0}
+            >
+              <option value="">
+                {levelIndex === 0 ? 'Select a category' : 'Choose subcategory (optional)'}
+              </option>
+              {options.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          );
+        })}
 
         <div>
           <label style={{ fontSize: '14px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
@@ -233,7 +210,6 @@ function NewListing({ token, onListingCreated }) {
           )}
           <input type="file" accept="image/*" onChange={handleImageChange} />
         </div>
-
         <input
           type="text"
           placeholder="Title (e.g. Single Room Near Campus)"
@@ -242,22 +218,21 @@ function NewListing({ token, onListingCreated }) {
           required
         />
 
-        {dynamicFields.map((field) => (
-          <input
-            key={field}
-            type="text"
-            placeholder={FIELD_LABELS[field] || field}
-            value={extraFields[field] || ''}
-            onChange={(e) => handleFieldChange(field, e.target.value)}
+        {attributeSchema.map((field) => (
+          <DynamicField
+            key={field.key}
+            field={field}
+            value={extraFields[field.key]}
+            onChange={handleFieldChange}
           />
         ))}
 
-        {dynamicFields.length > 0 && (
+        {attributeSchema.length > 0 && (
           <select value={condition} onChange={(e) => setCondition(e.target.value)}>
             <option value="">Condition</option>
-            <option value="new">New</option>
-            <option value="used">Used</option>
-            <option value="refurbished">Refurbished</option>
+            {CONDITIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
           </select>
         )}
 
@@ -280,7 +255,6 @@ function NewListing({ token, onListingCreated }) {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
         />
-
         <button type="button" onClick={useMyLocation} className="btn-secondary">
           📍 Use My Current Location
         </button>
@@ -315,3 +289,4 @@ function NewListing({ token, onListingCreated }) {
 }
 
 export default NewListing;
+
